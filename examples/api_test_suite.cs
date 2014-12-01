@@ -4,15 +4,22 @@ using com.vzaar.api;
 namespace VzaarApi {
 	class TestSuite {
     private Vzaar api;
-    private int success = 0;
-    private int failure = 0;
-    private int videoId = 1945413;
-    private string username = "vz-qa-account1";
-    private string token = "9711lPengmZgtj6R6nBtNqSdMqOcrsb8nTQTOXyxWY";
+    private int total = 0;
+    private int failures = 0;
+
+    private int videoId = 1465464;
+    private string username = "vz-account1";
+    private string token = "cyCFbqQ4YTkrQhjFu7OZ2yoO3ol2avg79jRqWhKCpo";
+    private string apiUrl = "http://app.vzaar.localhost";
+    
+//    private int videoId = 1945413;
+//    private string username = "vz-qa-account1";
+//    private string token = "9711lPengmZgtj6R6nBtNqSdMqOcrsb8nTQTOXyxWY";
+//    private string apiUrl = "https://app.qavzr.com";
 
     public TestSuite() {
       this.api = new Vzaar(this.username, this.token);
-      this.api.apiUrl = "https://app.qavzr.com";
+      this.api.apiUrl = apiUrl;
     }
 
     public void whoAmITest() {
@@ -27,11 +34,12 @@ namespace VzaarApi {
     public void videoListTest() {
       var query = new VideoListQuery
       {
-        labels = new string[]{"api", "api2"}
+       count = 10,
+       labels = new string[]{"api%2Capi2"}
       };
       
       var col = this.api.getVideoList(query);
-      System.Console.Write(col.Count);
+      this.assertEqual(col.Count, 1, "videoList");
     }
 
 
@@ -41,19 +49,20 @@ namespace VzaarApi {
 
 
     public void assertEqual(object a, object b, string mName) {
+      this.total += 1;
       if (a.Equals(b)) {
-        this.success =+ 1;
         System.Console.Write(".");
       }
       else
       {
-        this.failure =+ 1;
+        this.failures =+ 1;
         System.Console.Write("F(" + mName + ")");
       }
     }
 
     public void summarize() {
-      System.Console.WriteLine("\ndone");
+      var str = String.Concat("\n", this.total, " examples ", this.failures, " failures");
+      System.Console.WriteLine(str);
     }
   }
 
