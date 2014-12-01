@@ -6,22 +6,22 @@ namespace VzaarApi {
     private Vzaar api;
     private int success = 0;
     private int failure = 0;
-    private int videoId = 1465464;
-    private string username = "vz-account1";
-    private string token = "cyCFbqQ4YTkrQhjFu7OZ2yoO3ol2avg79jRqWhKCpo";
+    private int videoId = 1945413;
+    private string username = "vz-qa-account1";
+    private string token = "9711lPengmZgtj6R6nBtNqSdMqOcrsb8nTQTOXyxWY";
 
     public TestSuite() {
       this.api = new Vzaar(this.username, this.token);
-      this.api.apiUrl = "http://app.vzaar.localhost";
+      this.api.apiUrl = "https://app.qavzr.com";
     }
 
     public void whoAmITest() {
-      this.assertEqual(this.api.whoAmI(), "qloop1002", "whoAmI");
+      this.assertEqual(this.api.whoAmI(), this.username, "whoAmI");
     }
 
     public void videoDetailsTest() {
-      System.Console.WriteLine(this.api.getVideoDetails(this.videoId));
-//      this.assertEqual(this.api.getVideoDetails(this.videoId, true));
+      var vid = this.api.getVideoDetails(this.videoId);
+      this.assertEqual(vid.type, "video", "videoDetails");
     }
 
     public void videoListTest() {
@@ -31,19 +31,29 @@ namespace VzaarApi {
       };
       
       var col = this.api.getVideoList(query);
-      System.Console.WriteLine(col.Count);
+      System.Console.Write(col.Count);
     }
+
+
+
+
+
+
 
     public void assertEqual(object a, object b, string mName) {
       if (a.Equals(b)) {
         this.success =+ 1;
-        System.Console.WriteLine(".");
+        System.Console.Write(".");
       }
       else
       {
         this.failure =+ 1;
-        System.Console.WriteLine("F(" + mName + ")");
+        System.Console.Write("F(" + mName + ")");
       }
+    }
+
+    public void summarize() {
+      System.Console.WriteLine("\ndone");
     }
   }
 
@@ -53,7 +63,9 @@ namespace VzaarApi {
 
       var ts = new TestSuite();
       ts.whoAmITest();
+      ts.videoDetailsTest();
       ts.videoListTest();
+      ts.summarize();
 //      var query = new VideoListQuery
 //      {
 //        count = 10,
