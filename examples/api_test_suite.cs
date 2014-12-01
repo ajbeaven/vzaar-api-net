@@ -7,17 +7,20 @@ namespace VzaarApi {
     private int total = 0;
     private int failures = 0;
 
-    private int videoId = 1465464;
-    private string username = "vz-account1";
-    private string token = "cyCFbqQ4YTkrQhjFu7OZ2yoO3ol2avg79jRqWhKCpo";
-    private string apiUrl = "http://app.vzaar.localhost";
-    
-//    private int videoId = 1945413;
-//    private string username = "vz-qa-account1";
-//    private string token = "9711lPengmZgtj6R6nBtNqSdMqOcrsb8nTQTOXyxWY";
-//    private string apiUrl = "https://app.qavzr.com";
+    private readonly Random _rng = new Random();
+    private const string _chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    public TestSuite() {
+    public int videoId;
+    public string username;
+    public string token;
+    public string apiUrl;
+   
+    public TestSuite(string username, string token, string apiUrl, int videoId) {
+      this.username = username;
+      this.token = token;
+      this.apiUrl = apiUrl;
+      this.videoId = videoId;
+
       this.api = new Vzaar(this.username, this.token);
       this.api.apiUrl = apiUrl;
     }
@@ -43,8 +46,37 @@ namespace VzaarApi {
     }
 
 
+    public void videoUploadTest() {
+      var guid = this.api.uploadVideo("./examples/video.mp4");
+      var title = String.Concat("api-net-", this.RandomString(5));
+      
+      var processQuery = new VideoProcessQuery {
+        guid = guid,
+        title = title,
+        description = ".net api test",
+        profile = VideoProfile.ORIGINAL
+      };
+      var vidId = this.api.processVideo(processQuery);
+      var vid = this.api.getVideoDetails(vidId);
+
+      this.assertEqual(vid.videoStatus.id, 11, "videoUpload");
+    }
 
 
+
+
+
+
+
+
+    private string RandomString(int size) {
+      char[] buffer = new char[size];
+
+      for (int i = 0; i < size; i++) {
+        buffer[i] = _chars[_rng.Next(_chars.Length)];
+      }
+      return new string(buffer);
+    }
 
 
 
@@ -69,22 +101,25 @@ namespace VzaarApi {
   class Program {
 		static void Main(string[] args)
 		{
+      var username = "vz-account1";
+      var token = "cyCFbqQ4YTkrQhjFu7OZ2yoO3ol2avg79jRqWhKCpo";
+      var url = "http://app.vzaar.localhost";
+      var videoId = 1465464;
+      
+      if (args.Length > 0) {
+        username = args[1];
+        token = args[3];
+        url = args[5];
+        videoId = Int32.Parse(args[7]);
+      }
 
-      var ts = new TestSuite();
+      var ts = new TestSuite(username, token, url, videoId);
       ts.whoAmITest();
       ts.videoDetailsTest();
       ts.videoListTest();
+      ts.videoUploadTest();
       ts.summarize();
-//      var query = new VideoListQuery
-//      {
-//        count = 10,
-//        page = 1
-//      };
-//
-//      var videoList = api.getVideoList(query);
-//      foreach (var video in videoList) {
-//        System.Console.WriteLine(video.title);
-//      }
+
 		}
 	}
 }
