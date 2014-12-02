@@ -29,6 +29,16 @@ namespace VzaarApi {
       this.assertEqual(this.api.whoAmI(), this.username, "whoAmI");
     }
 
+    public void userDetailsTest() {
+      var user = this.api.getUserDetails(this.username);
+      this.assertEqual(user.authorName, this.username, "UserDetails");
+    }
+
+    public void accountDetailsTest() {
+      var account = this.api.getAccountDetails(34);
+      this.assertEqual(account.title, "Staff", "AccountDetails");
+    }
+
     public void videoDetailsTest() {
       var vid = this.api.getVideoDetails(this.videoId);
       this.assertEqual(vid.type, "video", "videoDetails");
@@ -45,21 +55,46 @@ namespace VzaarApi {
       this.assertEqual(col.Count, 1, "videoList");
     }
 
+    public void deleteVideoTest() {
+       var guid = this.api.uploadVideo("./examples/video.mp4");
+       var query = new VideoProcessQuery {
+        guid = guid,
+        title = "for deletion",
+        description = ".net api test",
+        profile = VideoProfile.ORIGINAL
+      };
+      var vidId = this.api.processVideo(query);
+      var res = this.api.deleteVideo(vidId);
+      this.assertEqual(res, true, "videoDelete");
+    }
+
+//    public void editVideoTest() {
+//      var query = new VideoEditQuery {
+//        title = this.RandomString(7),
+//        id = this.videoId
+//      };
+//      var res = this.api.editVideo(query);
+//      this.assertEqual(res, true, "editVideo");
+//    }
+
 
     public void videoUploadTest() {
       var guid = this.api.uploadVideo("./examples/video.mp4");
       var title = String.Concat("api-net-", this.RandomString(5));
       
-      var processQuery = new VideoProcessQuery {
+      var query = new VideoProcessQuery {
         guid = guid,
         title = title,
         description = ".net api test",
         profile = VideoProfile.ORIGINAL
       };
-      var vidId = this.api.processVideo(processQuery);
+      var vidId = this.api.processVideo(query);
       var vid = this.api.getVideoDetails(vidId);
 
       this.assertEqual(vid.videoStatus.id, 11, "videoUpload");
+      
+      // clean up
+      this.api.deleteVideo(vidId);
     }
 
 
@@ -67,16 +102,43 @@ namespace VzaarApi {
       var url = "http://samples.mplayerhq.hu/MPEG-4/turn-on-off.mp4";
       var title = String.Concat("api-net-lu-", this.RandomString(5));
       
-      var processQuery = new UploadLinkQuery {
+      var query = new UploadLinkQuery {
         title = title,
         url = url,
         description = ".net api test"
       };
       
-      var videoId = this.api.uploadLink(processQuery);
+      var videoId = this.api.uploadLink(query);
       var vid = this.api.getVideoDetails(videoId);
       this.assertEqual(vid.videoStatus.id, 11, "linkUpload");
     }
+
+
+    public void uploadSubtitleTest() {
+      var body = "srt";
+      
+      var query = new SubtitleQuery {
+        body = body,
+        videoId = this.videoId,
+        language = "en"
+      };
+      
+      var res = this.api.uploadSubtitle(query);
+      this.assertEqual(res, true, "uploadSubtitle");
+    }
+
+    public void generateThumbnailTest() {
+      var status = this.api.generateThumbnail(this.videoId, 2);
+      this.assertEqual(status, "Accepted", "generateThumbnail");
+    }
+
+
+//    public void uploadThumbnailTest() {
+//      var path = "./examples/pic.jpg";
+//      
+//      var status = this.api.uploadThumbnail(this.videoId, path);
+//      this.assertEqual(status, "Accepted", "uploadThumbnail");
+//    }
 
 
 
@@ -130,11 +192,18 @@ namespace VzaarApi {
       }
 
       var ts = new TestSuite(username, token, url, videoId);
-//      ts.whoAmITest();
-//      ts.videoDetailsTest();
-//      ts.videoListTest();
-//      ts.videoUploadTest();
+      ts.whoAmITest();
+      ts.videoDetailsTest();
+      ts.videoListTest();
+      ts.videoUploadTest();
       ts.linkUploadTest();
+      ts.uploadSubtitleTest();
+//      ts.uploadThumbnailTest();
+      ts.generateThumbnailTest();
+      ts.userDetailsTest();
+      ts.accountDetailsTest();
+//      ts.editVideoTest();
+      ts.deleteVideoTest();
       ts.summarize();
 
 		}
