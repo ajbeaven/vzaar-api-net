@@ -63,6 +63,22 @@ namespace VzaarApi {
     }
 
 
+    public void linkUploadTest() {
+      var url = "http://samples.mplayerhq.hu/MPEG-4/turn-on-off.mp4";
+      var title = String.Concat("api-net-lu-", this.RandomString(5));
+      
+      var processQuery = new UploadLinkQuery {
+        title = title,
+        url = url,
+        description = ".net api test"
+      };
+      
+      var videoId = this.api.uploadLink(processQuery);
+      var vid = this.api.getVideoDetails(videoId);
+      this.assertEqual(vid.videoStatus.id, 11, "linkUpload");
+    }
+
+
 
 
 
@@ -114,10 +130,11 @@ namespace VzaarApi {
       }
 
       var ts = new TestSuite(username, token, url, videoId);
-      ts.whoAmITest();
-      ts.videoDetailsTest();
-      ts.videoListTest();
-      ts.videoUploadTest();
+//      ts.whoAmITest();
+//      ts.videoDetailsTest();
+//      ts.videoListTest();
+//      ts.videoUploadTest();
+      ts.linkUploadTest();
       ts.summarize();
 
 		}
