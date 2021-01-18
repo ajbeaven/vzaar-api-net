@@ -333,7 +333,7 @@ namespace tests
 			HttpResponseMessage response = new HttpResponseMessage();
 			response.Content = new StringContent("");
 
-			string expected = "StatusCode: 422";
+			string expected = "StatusCode: UnprocessableEntity";//"StatusCode: 422";
 			try
 			{
 				response.StatusCode = (HttpStatusCode)422;
@@ -373,7 +373,7 @@ namespace tests
 			HttpResponseMessage response = new HttpResponseMessage();
 			response.Content = new StringContent("");
 
-			string expected = "StatusCode: 429";
+			string expected = "StatusCode: TooManyRequests";//"StatusCode: 429";
 			try
 			{
 				response.StatusCode = (HttpStatusCode)429;

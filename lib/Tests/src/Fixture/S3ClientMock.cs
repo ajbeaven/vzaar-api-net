@@ -19,7 +19,7 @@ namespace tests
 		{
 			Dictionary<string, object> tokens = new Dictionary<string, object>() {
 				{ "title", "Example video" },
-				{"filepath", "../../src/Fixture/movie-5mb.mp4"}
+				{"filepath", "../../../src/Fixture/movie-5mb.mp4"}
 			};
 
 			var task = Video.CreateAsync(tokens, new S3ClientMock(MockResponse.Signature));
@@ -30,7 +30,7 @@ namespace tests
 		{
 			Dictionary<string, object> tokens = new Dictionary<string, object>() {
 				{ "title", "Example video" },
-				{"filepath", "../../src/Fixture/movie-1mb.mp4"}
+				{"filepath", "../../../src/Fixture/movie-1mb.mp4"}
 			};
 
 			var task = Video.CreateAsync(tokens, new S3ClientMock(MockResponse.Signature));
