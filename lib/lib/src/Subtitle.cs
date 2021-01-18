@@ -1,87 +1,91 @@
-using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class Subtitle
+	public class Subtitle : BaseResource
 	{
-
-		internal Record record;
-
 		//constructor
-		internal Subtitle (long videoId, Client client)
+		internal Subtitle(long videoId, Client client)
+			: this(videoId, client, null)
 		{
-			record = new Record ("videos/" + videoId.ToString() + "/subtitles", client);
 		}
 
-		internal Subtitle (long videoId, Client client, long subtitleId)
+		internal Subtitle(long videoId, Client client, long? subtitleId)
+			: base("videos/" + videoId + "/subtitles", client)
 		{
-			record = new Record ("videos/" + videoId.ToString() + "/subtitles", client);
 			/*
             The endpoint does not provide Lookup, thus
             it is not possible to read data to 
             initialize the object before it is used.
             */
-			record ["id"] = subtitleId;
+			if (subtitleId.HasValue)
+				record["id"] = subtitleId;
 		}
 
-		internal Subtitle (Record item)
+		/// <summary>
+		/// Do not remove. This is required for use in BaseResourceCollection
+		/// </summary>
+		internal Subtitle(Record item)
+			: base(item)
 		{
 			record = item;
 		}
 
-		public object this[string index]{
-
-			get { return record [index];}
-
-		}
-
-		public object ToTypeDef(Type type){
-
-			return record.ToTypeDef (type);
-
+		public object this[string index]
+		{
+			get => record[index];
 		}
 
 		//create
-		internal virtual void Create(Dictionary<string,object> tokens) {
+		internal virtual void Create(Dictionary<string, object> tokens)
+		{
+			CreateAsync(tokens).Wait();
+		}
 
-			if(tokens.ContainsKey("file")) {
-
+		internal virtual async Task CreateAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("file"))
+			{
 				var filepath = tokens["file"].ToString();
 
-				record.Create (tokens, null, filepath);
-
-			} else {
-
-				record.Create (tokens);
-				
+				await record.Create(tokens, null, filepath).ConfigureAwait(false);
+			}
+			else
+			{
+				await record.Create(tokens).ConfigureAwait(false);
 			}
 		}
 
 		//update
-		internal virtual void Save(Dictionary<string,object> tokens) {
+		internal virtual void Save(Dictionary<string, object> tokens)
+		{
+			SaveAsync(tokens).Wait();
+		}
 
-			if(tokens.ContainsKey("file")) {
-
+		internal virtual async Task SaveAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("file"))
+			{
 				var filepath = tokens["file"].ToString();
 
-				record.Update (tokens, null, filepath);
-
-			} else {
-
-				record.Update (tokens);
-
+				await record.Update(tokens, null, filepath).ConfigureAwait(false);
+			}
+			else
+			{
+				await record.Update(tokens).ConfigureAwait(false);
 			}
 		}
 
 		//delete
-		internal virtual void Delete() {
+		public virtual void Delete()
+		{
+			DeleteAsync().Wait();
+		}
 
-			record.Delete ();
-
+		public virtual async Task DeleteAsync()
+		{
+			await record.Delete().ConfigureAwait(false);
 		}
 
 	}//end class

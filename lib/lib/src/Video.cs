@@ -1,249 +1,230 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 
 namespace VzaarApi
 {
-	public class Video
+	public class Video : BaseResource
 	{
-		internal Record record;
-		internal Subtitle subtitle;
-		internal SubtitlesList subtitlesList;
-
 		//constructor
-		public Video ()
+		public Video()
+			: this(Client.GetClient())
 		{
-			record = new Record ("videos");
-
 		}
 
-		public Video (Client client)
+		public Video(Client client)
+			: base("videos", client)
 		{
-			record = new Record ("videos", client);
 		}
 
-		internal Video (Record item)
+		internal Video(Record item)
+			: base(item)
 		{
 			record = item;
 		}
 
-		public Client GetClient() {
-			return record.RecordClient;
+		public bool Edited => record.Edited;
+
+		public object this[string index]
+		{
+			get => record[index];
+			set => record[index] = value;
 		}
 
-		public object this[string index]{
+		private async Task<Video> CreateDataAsync(Dictionary<string, object> tokens)
+		{
+			var containsFile = tokens.ContainsKey("filepath");
+			var containsGuid = tokens.ContainsKey("guid");
+			var containsUrl = tokens.ContainsKey("url");
 
-			get { return record [index];}
+			if (!(containsFile ^ containsGuid ^ containsUrl))
+				throw new VzaarApiException("Need to specify one of the following parameters: guid or url or filepath");
 
-			set { record [index] = value; }
-		}
+			if (containsFile & containsGuid & containsUrl)
+				throw new VzaarApiException("Only one of the parameters: guid or url or filepath expected");
 
-		public object ToTypeDef(Type type){
+			if (containsUrl)
+				return await LinkUpload.CreateAsync(tokens, record.RecordClient).ConfigureAwait(false);
 
-			return record.ToTypeDef (type);
+			if (containsGuid)
+				await record.Create(tokens).ConfigureAwait(false);
 
-		}
+			if (containsFile)
+			{
+				var filepath = (string)tokens["filepath"];
 
-		public bool Edited {
-			get { return record.Edited; }
-		}
+				var file = new FileInfo(filepath);
 
-		internal async Task<object> createDataAsync(Dictionary<string, object> tokens) {
+				if (file.Exists == false)
+					throw new VzaarApiException("File does not exist: " + filepath);
 
-			bool containsfile = tokens.ContainsKey ("filepath");
-			bool containsguid = tokens.ContainsKey ("guid");
-			bool containsurl = tokens.ContainsKey ("url");
+				var signature = await Signature.CreateAsync(filepath, record.RecordClient).ConfigureAwait(false);
 
-			//to return Video created from LinkUpload, otherwise return null
-			object result = null;
+				await record.RecordClient.HttpPostS3Async(filepath, signature).ConfigureAwait(false);
 
-			if (((containsfile ^ containsguid) ^ containsurl) == true) {
+				tokens.Remove("filepath");
+				tokens.Add("guid", (string)signature["guid"]);
 
-				if (((containsfile & containsguid) & containsurl) == true) {
-					throw new VzaarApiException ("Only one of the parameters: guid or url or filepath expected");
-				}
-
-				if (containsguid == true) {
-					
-					record.Create (tokens);
-
-				} else if (containsurl == true) {
-					
-					result = LinkUpload.Create (tokens,record.RecordClient);
-
-				} else {
-
-					string filepath = (string)tokens ["filepath"];
-
-					FileInfo file = new FileInfo (filepath);
-
-					if(file.Exists == false)
-						throw new VzaarApiException("File does not exist: "+ filepath);
-
-					Signature signature = Signature.Create (filepath, record.RecordClient);
-
-					await record.RecordClient.HttpPostS3Async (filepath, signature);
-
-					tokens.Remove ("filepath");
-					tokens.Add ("guid", (string)signature ["guid"]);
-
-					await createDataAsync (tokens);
-					
-				}
-
-			} else {
-
-				throw new VzaarApiException ();
+				await record.Create(tokens).ConfigureAwait(false);
 			}
 
-			return result;
-		}
-			
-		//create with additiobal parameters
-		public async static Task<Video> CreateAsync(Dictionary<string,object> tokens) {
-
-			var video = new Video ();
-
-			object urlvideo = await video.createDataAsync (tokens);
-			if (urlvideo != null)
-				return (Video)urlvideo;
-
-			return video;
+			return this;
 		}
 
-		public async static Task<Video> CreateAsync(Dictionary<string,object> tokens, Client client) {
-
-			var video = new Video (client);
-
-			object urlvideo = await video.createDataAsync (tokens);
-			if (urlvideo != null)
-				return (Video)urlvideo;
-
-			return video;
+		//create
+		public static Task<Video> CreateAsync(string filepath)
+		{
+			return CreateAsync(filepath, Client.GetClient());
 		}
 
-		//create from file
-		public async static Task<Video> CreateAsync(string filepath){
-
-			var video = new Video ();
-
-			var file = new Dictionary<string, object> ();
-			file.Add ("filepath",filepath);
-			await video.createDataAsync(file);
-
-			return video;
+		public static Task<Video> CreateAsync(string filepath, Client client)
+		{
+			return CreateAsync(new Dictionary<string, object> { { "filepath", filepath } }, client);
 		}
 
-		public async static Task<Video> CreateAsync(string filepath, Client client){
+		public static Task<Video> CreateAsync(Dictionary<string, object> tokens)
+		{
+			return CreateAsync(tokens, Client.GetClient());
+		}
 
-			var video = new Video (client);
+		public static async Task<Video> CreateAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var video = new Video(client);
 
-			var file = new Dictionary<string, object> ();
-			file.Add ("filepath",filepath);
-			await video.createDataAsync(file);
-
-			return video;
+			return await video.CreateDataAsync(tokens).ConfigureAwait(false);
 		}
 
 		//lookup
-		public static Video Find(long id) {
-
-			var video = new Video ();
-
-			video.record.Read (id);
-
-			return video;
+		public static Video Find(long id)
+		{
+			return Find(id, Client.GetClient());
 		}
 
-		public static  Video Find(long id, Client client) {
+		public static Video Find(long id, Client client)
+		{
+			return FindAsync(id, client).Result;
+		}
 
-			var video = new Video (client);
+		public static Task<Video> FindAsync(long id)
+		{
+			return FindAsync(id, Client.GetClient());
+		}
 
-			video.record.Read (id);
+		public static async Task<Video> FindAsync(long id, Client client)
+		{
+			var resource = new Video(client);
 
-			return video;
+			await resource.record.Read(id).ConfigureAwait(false);
+
+			return resource;
 		}
 
 		//update
-		public virtual void Save() {
-
-			record.Update ();
-
+		public virtual void Save()
+		{
+			SaveAsync().Wait();
 		}
 
-		public virtual void Save(Dictionary<string,object> tokens) {
+		public virtual void Save(Dictionary<string, object> tokens)
+		{
+			SaveAsync(tokens).Wait();
+		}
 
-			record.Update (tokens);
+		public virtual async Task SaveAsync()
+		{
+			await record.Update().ConfigureAwait(false);
+		}
 
+		public virtual async Task SaveAsync(Dictionary<string, object> tokens)
+		{
+			await record.Update(tokens).ConfigureAwait(false);
 		}
 
 		//delete
-		public virtual void Delete() {
+		public virtual void Delete()
+		{
+			DeleteAsync().Wait();
+		}
 
-			record.Delete ();
-
+		public virtual async Task DeleteAsync()
+		{
+			await record.Delete().ConfigureAwait(false);
 		}
 
 		//SubtitlesList get
-		public virtual SubtitlesList Subtitles(){
-
-			subtitlesList = new SubtitlesList((long)record["id"], record.RecordClient);
-			return subtitlesList;
-		} 
+		public virtual SubtitlesList Subtitles()
+		{
+			return new SubtitlesList((long)record["id"], record.RecordClient);
+		}
 
 		//Subtitle create
-		public virtual Subtitle SubtitleCreate(Dictionary<string,object> tokens){
+		public virtual Subtitle SubtitleCreate(Dictionary<string, object> tokens)
+		{
+			return SubtitleCreateAsync(tokens).Result;
+		}
 
-			subtitle = new Subtitle ((long)record["id"],record.RecordClient);
+		public virtual async Task<Subtitle> SubtitleCreateAsync(Dictionary<string, object> tokens)
+		{
+			var subtitle = new Subtitle((long)record["id"], record.RecordClient);
 			subtitle.Create(tokens);
-			
+
 			//refresh video object
-			record.Read ((long)record["id"]);
+			await record.Read((long)record["id"]).ConfigureAwait(false);
 
 			return subtitle;
-
 		}
 
 		//Subtitle update
-		public virtual Subtitle SubtitleUpdate(long subtitleId, Dictionary<string,object> tokens){
+		public virtual Subtitle SubtitleUpdate(long subtitleId, Dictionary<string, object> tokens)
+		{
+			return SubtitleUpdateAsync(subtitleId, tokens).Result;
+		}
 
-			subtitle = new Subtitle ((long)record["id"], record.RecordClient, subtitleId);
+		public virtual async Task<Subtitle> SubtitleUpdateAsync(long subtitleId, Dictionary<string, object> tokens)
+		{
+			var subtitle = new Subtitle((long)record["id"], record.RecordClient, subtitleId);
 			subtitle.Save(tokens);
 
 			//refresh video object
-			record.Read ((long)record["id"]);
+			await record.Read((long)record["id"]).ConfigureAwait(false);
 
 			return subtitle;
-			
-		} 
+		}
 
 		//Subtitle delete
-		public virtual Subtitle SubtitleDelete(long subtitleId){
+		public virtual Subtitle SubtitleDelete(long subtitleId)
+		{
+			return SubtitleDeleteAsync(subtitleId).Result;
+		}
 
-			subtitle = new Subtitle ((long)record["id"], record.RecordClient, subtitleId);
+		public virtual async Task<Subtitle> SubtitleDeleteAsync(long subtitleId)
+		{
+			var subtitle = new Subtitle((long)record["id"], record.RecordClient, subtitleId);
 			subtitle.Delete();
 
 			//refresh video object
-			record.Read ((long)record["id"]);
+			await record.Read((long)record["id"]).ConfigureAwait(false);
 
 			return subtitle;
 		}
 
 		//Set Image Frame
-		public virtual void SetImageFrame(Dictionary<string,object> tokens){
+		public virtual void SetImageFrame(Dictionary<string, object> tokens)
+		{
+			SetImageFrameAsync(tokens).Wait();
+		}
 
-			var videoId = (long)record["id"];
-
-			if(tokens.ContainsKey("image")) {
-
+		public virtual async Task SetImageFrameAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("image"))
+			{
+				var videoId = (long)record["id"];
 				var filepath = tokens["image"].ToString();
-				record.Create (tokens, "/"+videoId.ToString() +"/image", filepath);
-
-			} else {
-
-				record.Update (tokens, "/image");
-
+				await record.Create(tokens, $"/{videoId}/image", filepath).ConfigureAwait(false);
+			}
+			else
+			{
+				await record.Update(tokens, "/image").ConfigureAwait(false);
 			}
 		}
 	}

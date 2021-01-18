@@ -1,112 +1,119 @@
-﻿using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class Playlist
+	public class Playlist : BaseResource
 	{
-
-		internal Record record;
-
 		//constructor
-		public Playlist ()
+		public Playlist()
+			: this(Client.GetClient())
 		{
-			record = new Record ("feeds/playlists");
-
 		}
 
-		public Playlist (Client client)
+		public Playlist(Client client)
+			: base("feeds/playlists", client)
 		{
-			record = new Record ("feeds/playlists", client);
 		}
 
-		internal Playlist (Record item)
+		/// <summary>
+		/// Do not remove. This is required for use in BaseResourceCollection
+		/// </summary>
+		internal Playlist(Record item)
+			: base(item)
 		{
 			record = item;
 		}
 
-		public Client GetClient() {
-			return record.RecordClient;
-		}
+		public bool Edited => record.Edited;
 
-		public object this[string index]{
-
-			get { return record [index];}
-
-			set { record [index] = value; }
-		}
-
-		public object ToTypeDef(Type type){
-
-			return record.ToTypeDef (type);
-
-		}
-
-		public bool Edited {
-			get { return record.Edited; }
+		public object this[string index]
+		{
+			get => record[index];
+			set => record[index] = value;
 		}
 
 		//create
-		public static Playlist Create(Dictionary<string,object> tokens) {
-
-			var playlist = new Playlist ();
-
-			playlist.record.Create (tokens);
-
-			return playlist;
+		public static Playlist Create(Dictionary<string, object> tokens)
+		{
+			return Create(tokens, Client.GetClient());
 		}
 
-		public static Playlist Create(Dictionary<string,object> tokens, Client client){
+		public static Playlist Create(Dictionary<string, object> tokens, Client client)
+		{
+			return CreateAsync(tokens, client).Result;
+		}
 
-			var playlist = new Playlist (client);
+		public static Task<Playlist> CreateAsync(Dictionary<string, object> tokens)
+		{
+			return CreateAsync(tokens, Client.GetClient());
+		}
 
-			playlist.record.Create (tokens);
+		public static async Task<Playlist> CreateAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var playlist = new Playlist(client);
+
+			await playlist.record.Create(tokens).ConfigureAwait(false);
 
 			return playlist;
 		}
 
 		//lookup
-		public static Playlist Find(long id) {
-
-			var playlist = new Playlist ();
-
-			playlist.record.Read (id);
-
-			return playlist;
+		public static Playlist Find(long id)
+		{
+			return Find(id, Client.GetClient());
 		}
 
-		public static Playlist Find(long id, Client client) {
+		public static Playlist Find(long id, Client client)
+		{
+			return FindAsync(id, client).Result;
+		}
 
-			var playlist = new Playlist (client);
+		public static Task<Playlist> FindAsync(long id)
+		{
+			return FindAsync(id, Client.GetClient());
+		}
 
-			playlist.record.Read (id);
+		public static async Task<Playlist> FindAsync(long id, Client client)
+		{
+			var resource = new Playlist(client);
 
-			return playlist;
+			await resource.record.Read(id).ConfigureAwait(false);
+
+			return resource;
 		}
 
 		//update
-		public virtual void Save() {
-
-			record.Update ();
-
+		public virtual void Save()
+		{
+			SaveAsync().Wait();
 		}
 
-		public virtual void Save(Dictionary<string,object> tokens) {
+		public virtual void Save(Dictionary<string, object> tokens)
+		{
+			SaveAsync(tokens).Wait();
+		}
 
-			record.Update (tokens);
+		public virtual async Task SaveAsync()
+		{
+			await record.Update().ConfigureAwait(false);
+		}
 
+		public virtual async Task SaveAsync(Dictionary<string, object> tokens)
+		{
+			await record.Update(tokens).ConfigureAwait(false);
 		}
 
 		//delete
-		public virtual void Delete() {
-
-			record.Delete ();
-
+		public virtual void Delete()
+		{
+			DeleteAsync().Wait();
 		}
 
+		public virtual async Task DeleteAsync()
+		{
+			await record.Delete().ConfigureAwait(false);
+		}
 	}
 }
 

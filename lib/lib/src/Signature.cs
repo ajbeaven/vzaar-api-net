@@ -1,163 +1,158 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class Signature
+	public class Signature : BaseResource
 	{
-		internal Record record;
-
 		//constructor
-		public Signature ()
+		public Signature()
+			: this(Client.GetClient())
 		{
-			record = new Record ("signature");
-
 		}
 
-		public Signature (Client client)
+		public Signature(Client client)
+			: base("signature", client)
 		{
-			record = new Record ("signature", client);
 		}
 
-		public Client GetClient() {
-			return record.RecordClient;
+		public object this[string index]
+		{
+			get => record[index];
 		}
 
-		public object this[string index]{
-
-			get { return record [index];}
-
+		//create from file
+		public static Signature Create(string filepath)
+		{
+			return Create(filepath, Client.GetClient());
 		}
 
-		public object ToTypeDef(Type type){
-
-			return record.ToTypeDef (type);
-
+		public static Signature Create(string filepath, Client client)
+		{
+			return CreateAsync(filepath, client).Result;
 		}
 
-		internal void CreateSingle(Dictionary<string,object> tokens) {
+		public static Task<Signature> CreateAsync(string filepath)
+		{
+			return CreateAsync(filepath, Client.GetClient());
+		}
 
-			if (tokens.ContainsKey ("uploader") == false) {
-				tokens.Add ("uploader", Client.UPLOADER + Client.VERSION);
-			}
+		public static async Task<Signature> CreateAsync(string filepath, Client client)
+		{
+			var signature = new Signature(client);
+
+			await signature.CreateFromFile(filepath).ConfigureAwait(false);
+
+			return signature;
+		}
+
+		public static Signature Single()
+		{
+			return Single(new Dictionary<string, object>(), Client.GetClient());
+		}
+
+		public static Signature Single(Client client)
+		{
+			return Single(new Dictionary<string, object>(), client);
+		}
+
+		public static Signature Single(Dictionary<string, object> tokens)
+		{
+			return Single(tokens, Client.GetClient());
+		}
+
+		public static Signature Single(Dictionary<string, object> tokens, Client client)
+		{
+			return SingleAsync(tokens, client).Result;
+		}
+
+		public static Task<Signature> SingleAsync()
+		{
+			return SingleAsync(new Dictionary<string, object>(), Client.GetClient());
+		}
+
+		public static Task<Signature> SingleAsync(Client client)
+		{
+			return SingleAsync(new Dictionary<string, object>(), client);
+		}
+
+		public static Task<Signature> SingleAsync(Dictionary<string, object> tokens)
+		{
+			return SingleAsync(tokens, Client.GetClient());
+		}
+
+		public static async Task<Signature> SingleAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var signature = new Signature(client);
+
+			await signature.CreateSingleAsync(tokens).ConfigureAwait(false);
+
+			return signature;
+		}
+
+		public static Signature Multipart(Dictionary<string, object> tokens)
+		{
+			return Multipart(tokens, Client.GetClient());
+		}
+
+		public static Signature Multipart(Dictionary<string, object> tokens, Client client)
+		{
+			return MultipartAsync(tokens, client).Result;
+		}
+
+		public static Task<Signature> MultipartAsync(Dictionary<string, object> tokens)
+		{
+			return MultipartAsync(tokens, Client.GetClient());
+		}
+
+		public static async Task<Signature> MultipartAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var signature = new Signature(client);
+
+			await signature.CreateMultipartAsync(tokens).ConfigureAwait(false);
+
+			return signature;
+		}
+
+		private async Task CreateSingleAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("uploader") == false)
+				tokens.Add("uploader", Client.UPLOADER + Client.VERSION);
 
 			string path = "/single/2";
 
-			record.Create (tokens, path);
-
+			await record.Create(tokens, path).ConfigureAwait(false);
 		}
 
-		internal void CreateSingle() {
-
-			CreateSingle (new Dictionary<string, object> ());
-		
-		}
-
-		internal void CreateMultipart(Dictionary<string,object> tokens) {
-
-			if (tokens.ContainsKey ("uploader") == false) {
-				tokens.Add ("uploader", Client.UPLOADER + Client.VERSION);
-			}
+		private async Task CreateMultipartAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("uploader") == false)
+				tokens.Add("uploader", Client.UPLOADER + Client.VERSION);
 
 			string path = "/multipart/2";
 
-			record.Create (tokens, path);
+			await record.Create(tokens, path).ConfigureAwait(false);
 		}
 
-		internal void CreateFromFile(string filepath) {
+		private async Task CreateFromFile(string filepath)
+		{
+			var file = new FileInfo(filepath);
+			if (!file.Exists)
+				throw new VzaarApiException("File does not exist: " + filepath);
 
-			FileInfo file = new FileInfo (filepath);
-
-			if(file.Exists == false)
-				throw new VzaarApiException("File does not exist: "+filepath);
-
-			Dictionary<string, object > tokens = new Dictionary<string, object> ();
+			var tokens = new Dictionary<string, object>();
 
 			string filename = file.Name;
 			long filesize = file.Length;
 
-			tokens.Add ("filename", filename);
-			tokens.Add ("filesize", filesize);
+			tokens.Add("filename", filename);
+			tokens.Add("filesize", filesize);
 
-			if (filesize >= Client.MULTIPART_MIN_SIZE) {
-				CreateMultipart (tokens);	
-			} else {
-				CreateSingle (tokens);
-			}
-		}
-
-		//create from file
-		public static Signature Create(string filepath) {
-
-			var signature = new Signature ();
-
-			signature.CreateFromFile (filepath);
-
-			return signature;
-		}
-
-		public static Signature Create(string filepath, Client client) {
-
-			var signature = new Signature (client);
-
-			signature.CreateFromFile (filepath);
-
-			return signature;
-		}
-
-		public static Signature Single(){
-
-			var signature = new Signature ();
-
-			signature.CreateSingle ();
-
-			return signature;
-		}
-
-		public static Signature Single(Client client){
-
-			var signature = new Signature (client);
-
-			signature.CreateSingle ();
-
-			return signature;
-		}
-
-		public static Signature Single(Dictionary<string,object> tokens){
-
-			var signature = new Signature ();
-
-			signature.CreateSingle (tokens);
-
-			return signature;
-		}
-
-		public static Signature Single(Dictionary<string,object> tokens, Client client){
-			
-			var signature = new Signature (client);
-
-			signature.CreateSingle (tokens);
-
-			return signature;
-		}
-
-		public static Signature Multipart(Dictionary<string,object> tokens){
-
-			var signature = new Signature ();
-
-			signature.CreateMultipart (tokens);
-
-			return signature;
-		}
-
-		public static Signature Multipart(Dictionary<string,object> tokens, Client client){
-
-			var signature = new Signature (client);
-
-			signature.CreateMultipart (tokens);
-
-			return signature;
+			if (filesize >= Client.MULTIPART_MIN_SIZE)
+				await CreateMultipartAsync(tokens).ConfigureAwait(false);
+			else
+				await CreateSingleAsync(tokens).ConfigureAwait(false);
 		}
 	}
 }

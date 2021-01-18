@@ -53,7 +53,7 @@ namespace tests
 		[Test()] 
 		public void CreateMultipart() {
 
-			FileInfo file = new FileInfo ("../../src/Fixture/movie-5mb.mp4");
+			FileInfo file = new FileInfo ("../../../src/Fixture/movie-5mb.mp4");
 
 			var tokens = new Dictionary<string,object> (){
 				{"uploader","my uploader nunit"},
@@ -72,7 +72,7 @@ namespace tests
 		[Test()] 
 		public void CreateMultipartFromFile() {
 
-			var filepath = "../../src/Fixture/movie-5mb.mp4";
+			var filepath = "../../../src/Fixture/movie-5mb.mp4";
 
 			Signature signature = Signature.Create (filepath, new ClientMock (MockResponse.Signature));
 
@@ -85,7 +85,7 @@ namespace tests
 		[Test()] 
 		public void CreateSingleFromFile() {
 
-			var filepath = "../../src/Fixture/movie-1mb.mp4";
+			var filepath = "../../../src/Fixture/movie-1mb.mp4";
 
 			Signature signature = Signature.Create (filepath, new ClientMock (MockResponse.Signature));
 

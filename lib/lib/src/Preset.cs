@@ -1,61 +1,57 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class Preset
+	public class Preset : BaseResource
 	{
-		internal Record record;
-
 		//constructor
-		public Preset ()
+		public Preset()
+			: this(Client.GetClient())
 		{
-			record = new Record ("encoding_presets");
-
 		}
 
-		public Preset (Client client)
+		public Preset(Client client)
+			: base("encoding_presets", client)
 		{
-			record = new Record ("encoding_presets", client);
 		}
 
-		internal Preset (Record item)
+		/// <summary>
+		/// Do not remove. This is required for use in BaseResourceCollection
+		/// </summary>
+		internal Preset(Record item)
+			: base(item)
 		{
 			record = item;
 		}
 
-		public Client GetClient() {
-			return record.RecordClient;
-		}
-
-		public object this[string index]{
-
-			get { return record [index];}
-
-		}
-
-		public object ToTypeDef(Type type){
-
-			return record.ToTypeDef (type);
-
+		public object this[string index]
+		{
+			get => record[index];
 		}
 
 		//lookup
-		public static Preset Find(long id) {
-
-			var preset = new Preset ();
-
-			preset.record.Read (id);
-
-			return preset;
+		public static Preset Find(long id)
+		{
+			return Find(id, Client.GetClient());
 		}
 
-		public static Preset Find(long id, Client client) {
+		public static Preset Find(long id, Client client)
+		{
+			return FindAsync(id, client).Result;
+		}
 
-			var preset = new Preset (client);
+		public static Task<Preset> FindAsync(long id)
+		{
+			return FindAsync(id, Client.GetClient());
+		}
 
-			preset.record.Read (id);
+		public static async Task<Preset> FindAsync(long id, Client client)
+		{
+			var resource = new Preset(client);
 
-			return preset;
+			await resource.record.Read(id).ConfigureAwait(false);
+
+			return resource;
 		}
 	}
 }

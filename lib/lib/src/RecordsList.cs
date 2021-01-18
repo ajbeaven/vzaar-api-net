@@ -1,202 +1,163 @@
 ﻿using System;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace VzaarApi
 {
 	internal class RecordsList
 	{
-		public Client RecordClient { get; set;}
-		public string RecordEndpoint { get; set;}
+		internal Client RecordClient { get; set; }
+		internal string RecordEndpoint { get; set; }
 
-		public JObject Data { get; set; }
-		public List<Record> List { get; }
+		internal JObject Data { get; set; }
+		internal List<Record> List { get; }
 
-		public RecordsList (string endpoint)
+		internal RecordsList(string endpoint)
+			: this(endpoint, Client.GetClient())
 		{
-			Data = new JObject();
-			List = new List<Record> ();
-
-			RecordClient = Client.GetClient ();
-			RecordEndpoint = endpoint;
 		}
 
-		public RecordsList (string endpoint, Client client)
+		internal RecordsList(string endpoint, Client client)
 		{
 			Data = new JObject();
-			List = new List<Record> ();
+			List = new List<Record>();
 
 			RecordClient = client;
 			RecordEndpoint = endpoint;
 		}
 
-		public virtual void UpdateList(string json) {
-
+		internal virtual void UpdateList(string json)
+		{
 			//set new data
 			Data = JObject.Parse(json);
 
 			//validate data object
 			JToken token;
-			if (Data.TryGetValue ("data", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'data' token");
+			if (Data.TryGetValue("data", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'data' token");
 
-			if(token.Type != JTokenType.Array)
-				throw new VzaarApiException ("Received data malformed: 'data' value is not array");
+			if (token.Type != JTokenType.Array)
+				throw new VzaarApiException("Received data malformed: 'data' value is not array");
 
-			if (Data.TryGetValue ("meta", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'meta' token");
+			if (Data.TryGetValue("meta", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'meta' token");
 
-			JObject item = JObject.Parse (token.ToString ());
+			JObject item = JObject.Parse(token.ToString());
 
-			if (item.TryGetValue ("links", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'links' token");
+			if (item.TryGetValue("links", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'links' token");
 
-			item = JObject.Parse (token.ToString ());
+			item = JObject.Parse(token.ToString());
 
-			if (item.TryGetValue ("first", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'first' token");
+			if (item.TryGetValue("first", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'first' token");
 
-			if (item.TryGetValue ("last", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'last' token");
+			if (item.TryGetValue("last", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'last' token");
 
-			if (item.TryGetValue ("next", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'next' token");
+			if (item.TryGetValue("next", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'next' token");
 
-			if (item.TryGetValue ("previous", out token) == false)
-				throw new VzaarApiException ("Received data malformed: Missing 'previous' token");
+			if (item.TryGetValue("previous", out token) == false)
+				throw new VzaarApiException("Received data malformed: Missing 'previous' token");
 
 			//initialize object
-			List.Clear ();
+			List.Clear();
 
-			var recordsArray = (JArray)Data ["data"];
+			var recordsArray = (JArray)Data["data"];
 
-			for(int i = 0; i < recordsArray.Count; i++){
+			foreach (var element in recordsArray)
+			{
+				var record = new JObject
+				{
+					["data"] = element
+				};
 
-				var element = recordsArray[i];
+				Record toList = new Record(RecordEndpoint, RecordClient)
+				{
+					Data = record
+				};
 
-				var record = new JObject();
-				record ["data"] = element;
-
-				Record toList = new Record (RecordEndpoint,RecordClient);
-				toList.Data = record;
-
-				List.Add (toList);
-
+				List.Add(toList);
 			}
-
 		}
 
-		public virtual void Read(Dictionary<string, string> query){
-
+		internal virtual Task Read(Dictionary<string, string> query)
+		{
 			string path = "";
 
-			Read (path, query);
+			return Read(path, query);
 		}
 
-		public virtual void Read(string endpoint, Dictionary<string, string> query){
+		internal virtual async Task Read(string endpoint, Dictionary<string, string> query)
+		{
+			var responseJson = await RecordClient.HttpGetAsync(RecordEndpoint + endpoint, query).ConfigureAwait(false);
 
-			var task = RecordClient.HttpGetAsync (RecordEndpoint + endpoint,query);
-			task.Wait ();
-
-			UpdateList (task.Result);
-
+			UpdateList(responseJson);
 		}
 
-		internal Dictionary<string,string> ExtractUriQuery(string link) {
+		internal Dictionary<string, string> ExtractUriQuery(string link)
+		{
+			var linkUri = new UriBuilder((string)link);
+			var linkString = linkUri.Query.Substring(1);
+			var linkQuery = linkString.Split('&');
 
-			UriBuilder linkUri = new UriBuilder ((string)link);
-			string linkString = linkUri.Query.Substring (1);
-			string[] linkQuery = linkString.Split ('&');
+			var query = new Dictionary<string, string>();
 
-			Dictionary<string, string> query = new Dictionary<string, string> ();
+			foreach (string q in linkQuery)
+			{
+				string[] item = q.Split('=');
 
-			foreach (string q in linkQuery) {
-				string[] item = q.Split ('=');
+				string name = item[0].Trim();
+				string value = item[1].Trim();
 
-				string name = item [0].Trim ();
-				string value = item [1].Trim ();
-
-				if(query.ContainsKey(name) == false)
-					query.Add (name, value);
+				if (query.ContainsKey(name) == false)
+					query.Add(name, value);
 			}
 
 			return query;
 		}
 
-		internal void GetPage(string link){
-
-			var query = ExtractUriQuery (link);
-			Read (query);
-
+		internal virtual Task<bool> First()
+		{
+			return JumpToPage("first");
 		}
 
-		public virtual bool First() {
-			
-			var link = Data ["meta"] ["links"] ["first"];
+		internal virtual Task<bool> Next()
+		{
+			return JumpToPage("next");
+		}
 
-			if (link.Type != JTokenType.Null) {
-				
-				GetPage ((string)link);
+		internal virtual Task<bool> Previous()
+		{
+			return JumpToPage("previous");
+		}
+
+		internal virtual Task<bool> Last()
+		{
+			return JumpToPage("last");
+		}
+
+		private async Task<bool> JumpToPage(string linkName)
+		{
+			var link = Data["meta"]["links"][linkName];
+
+			if (link.Type != JTokenType.Null)
+			{
+				await GetPage((string)link).ConfigureAwait(false);
 
 				return true;
-
-			} else {
-				
-				return false;
 			}
+
+			return false;
 		}
 
-		public virtual bool Next() {
-			
-			var link = Data ["meta"] ["links"] ["next"];
+		private Task GetPage(string link)
+		{
+			var query = ExtractUriQuery(link);
 
-			if (link.Type != JTokenType.Null) {
-				
-				GetPage ((string)link);
-
-				return true;
-
-			} else {
-				
-				return false;
-
-			}
+			return Read(query);
 		}
-
-		public virtual bool Previous() {
-			
-			var link = Data ["meta"] ["links"] ["previous"];
-
-			if (link.Type != JTokenType.Null) {
-
-				GetPage ((string)link);
-			
-				return true;
-
-			} else {
-
-				return false;
-
-			}
-		}
-
-		public virtual bool Last() {
-			
-			var link = Data ["meta"] ["links"] ["last"];
-
-			if (link.Type != JTokenType.Null) {
-
-				GetPage ((string)link);
-			
-				return true;
-
-			} else {
-
-				return false;
-
-			}
-		}
-
 	}
 }

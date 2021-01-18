@@ -1,77 +1,74 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class LinkUpload
+	public class LinkUpload : BaseResource
 	{
-		internal Record record;
-
-		public LinkUpload ()
+		public LinkUpload()
+			: this(Client.GetClient())
 		{
-			record = new Record ("link_uploads");
-
 		}
 
-		public LinkUpload (Client client)
+		public LinkUpload(Client client)
+			: base("link_uploads", client)
 		{
-			record = new Record ("link_uploads", client);
 		}
 
-		internal Video LinkCreate(Dictionary<string,object> tokens) {
+		internal async Task<Video> LinkCreateAsync(Dictionary<string, object> tokens)
+		{
+			if (tokens.ContainsKey("uploader") == false)
+				tokens.Add("uploader", Client.UPLOADER + Client.VERSION);
 
-			if (tokens.ContainsKey ("uploader") == false) {
-				tokens.Add ("uploader", Client.UPLOADER + Client.VERSION);
-			}
-
-			record.Create (tokens);
+			await record.Create(tokens).ConfigureAwait(false);
 			record.RecordEndpoint = "videos";
 
-			var video = new Video (record);
+			var video = new Video(record);
 
 			return video;
 		}
 
-		//create from url
-		public static Video Create(string url) {
-
-			var link = new LinkUpload ();
-
-			var tokens = new Dictionary<string, object> ();
-			tokens.Add ("url", url);
-
-			var video = link.LinkCreate (tokens);
-
-			return video;
+		//create
+		public static Video Create(string url)
+		{
+			return Create(url, Client.GetClient());
 		}
 
-		public static Video Create(string url, Client client) {
-
-			var link = new LinkUpload (client);
-
-			var tokens = new Dictionary<string, object> ();
-			tokens.Add ("url", url);
-
-			var video = link.LinkCreate (tokens);
-
-			return video;
+		public static Video Create(string url, Client client)
+		{
+			return Create(new Dictionary<string, object> {{"url", url}}, client);
 		}
 
-		//create from url with additional parameters
-		public static Video Create(Dictionary<string,object> tokens) {
-
-			var link = new LinkUpload ();
-
-			var video = link.LinkCreate (tokens);
-
-			return video;
+		public static Video Create(Dictionary<string, object> tokens)
+		{
+			return Create(tokens, Client.GetClient());
 		}
 
-		public static Video Create(Dictionary<string,object> tokens, Client client){
+		public static Video Create(Dictionary<string, object> tokens, Client client)
+		{
+			return CreateAsync(tokens, client).Result;
+		}
 
-			var link = new LinkUpload (client);
+		public static Task<Video> CreateAsync(string url)
+		{
+			return CreateAsync(url, Client.GetClient());
+		}
 
-			var video = link.LinkCreate (tokens);
+		public static Task<Video> CreateAsync(string url, Client client)
+		{
+			return CreateAsync(new Dictionary<string, object> { { "url", url } }, client);
+		}
+
+		public static Task<Video> CreateAsync(Dictionary<string, object> tokens)
+		{
+			return CreateAsync(tokens, Client.GetClient());
+		}
+
+		public static async Task<Video> CreateAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var link = new LinkUpload(client);
+
+			var video = await link.LinkCreateAsync(tokens).ConfigureAwait(false);
 
 			return video;
 		}

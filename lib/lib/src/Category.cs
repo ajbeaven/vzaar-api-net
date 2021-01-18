@@ -1,121 +1,130 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace VzaarApi
 {
-	public class Category
+	public class Category : BaseResource
 	{
-		internal Record record;
-
 		//constructor
-		public Category ()
+		public Category()
+			: this (Client.GetClient())
 		{
-			record = new Record ("categories");
-
 		}
 
-		public Category (Client client)
+		public Category(Client client)
+			: base("categories", client)
 		{
-			record = new Record ("categories", client);
 		}
 
-		internal Category (Record item)
+		/// <summary>
+		/// Do not remove. This is required for use in BaseResourceCollection
+		/// </summary>
+		internal Category(Record item)
+			: base(item)
 		{
 			record = item;
 		}
 
-		public Client GetClient() {
-			return record.RecordClient;
+		public bool Edited => record.Edited;
+
+		public object this[string index]
+		{
+			get => record[index];
+			set => record[index] = value;
 		}
 
-		public object this[string index]{
-
-			get { return record [index];}
-
-			set { record [index] = value; }
+		public CategoriesList Subtree()
+		{
+			return Subtree(new Dictionary<string, string>());
 		}
 
-		public object ToTypeDef(Type type){
-
-			return record.ToTypeDef (type);
-
-		}
-
-		public bool Edited {
-			get { return record.Edited; }
-		}
-
-		public CategoriesList Subtree() {
-
-			long id = (long)this ["id"];
-			var query = new Dictionary<string,string> ();
-			return CategoriesList.Subtree (id, query, record.RecordClient);
-		}
-
-		public CategoriesList Subtree(Dictionary<string, string> query) {
-
-			long id = (long)this ["id"];
-			return CategoriesList.Subtree (id, query, record.RecordClient);
+		public CategoriesList Subtree(Dictionary<string, string> query)
+		{
+			long id = (long)this["id"];
+			return CategoriesList.Subtree(id, query, record.RecordClient);
 		}
 
 		//lookup
-		public static Category Find(long id) {
-
-			var category = new Category ();
-
-			category.record.Read (id);
-
-			return category;
+		public static Category Find(long id)
+		{
+			return Find(id, Client.GetClient());
 		}
 
-		public static Category Find(long id, Client client) {
+		public static Category Find(long id, Client client)
+		{
+			return FindAsync(id, client).Result;
+		}
 
-			var category = new Category (client);
+		public static Task<Category> FindAsync(long id)
+		{
+			return FindAsync(id, Client.GetClient());
+		}
 
-			category.record.Read (id);
+		public static async Task<Category> FindAsync(long id, Client client)
+		{
+			var item = new Category(client);
 
-			return category;
+			await item.record.Read(id).ConfigureAwait(false);
+
+			return item;
 		}
 
 		//create
-		public static Category Create(Dictionary<string,object> tokens) {
-
-			var category = new Category ();
-
-			category.record.Create (tokens);
-
-			return category;
+		public static Category Create(Dictionary<string, object> tokens)
+		{
+			return Create(tokens, Client.GetClient());
 		}
 
-		public static Category Create(Dictionary<string,object> tokens, Client client){
+		public static Category Create(Dictionary<string, object> tokens, Client client)
+		{
+			return CreateAsync(tokens, client).Result;
+		}
 
-			var category = new Category (client);
+		public static Task<Category> CreateAsync(Dictionary<string, object> tokens)
+		{
+			return CreateAsync(tokens, Client.GetClient());
+		}
 
-			category.record.Create (tokens);
+		public static async Task<Category> CreateAsync(Dictionary<string, object> tokens, Client client)
+		{
+			var resource = new Category(client);
 
-			return category;
+			await resource.record.Create(tokens).ConfigureAwait(false);
+
+			return resource;
 		}
 
 		//update
-		public virtual void Save() {
-
-			record.Update ();
-
+		public virtual void Save()
+		{
+			SaveAsync().Wait();
 		}
 
-		public virtual void Save(Dictionary<string,object> tokens) {
+		public virtual void Save(Dictionary<string, object> tokens)
+		{
+			SaveAsync(tokens).Wait();
+		}
 
-			record.Update (tokens);
+		public virtual async Task SaveAsync()
+		{
+			await record.Update().ConfigureAwait(false);
+		}
 
+		public virtual async Task SaveAsync(Dictionary<string, object> tokens)
+		{
+			await record.Update(tokens).ConfigureAwait(false);
 		}
 
 		//delete
-		public virtual void Delete() {
-
-			record.Delete ();
-
+		public virtual void Delete()
+		{
+			DeleteAsync().Wait();
 		}
 
+		public virtual async Task DeleteAsync()
+		{
+			await record.Delete().ConfigureAwait(false);
+		}
 	}
 }
 
