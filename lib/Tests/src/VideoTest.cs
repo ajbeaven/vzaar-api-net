@@ -58,7 +58,7 @@ namespace tests
 
 			Dictionary<string, object> tokens = new Dictionary<string, object> () {
 				{ "title", "Example video" },
-				{"filepath", "../../src/Fixture/movie-5mb.mp4"}
+				{"filepath", "../../../src/Fixture/movie-5mb.mp4"}
 			};
 
 			var task = Video.CreateAsync (tokens, new S3ClientMock(MockResponse.Video));
@@ -82,7 +82,7 @@ namespace tests
 
 			Dictionary<string, object> tokens = new Dictionary<string, object> () {
 				{ "title", "Example video" },
-				{"filepath", "../../src/Fixture/movie-1mb.mp4"}
+				{"filepath", "../../../src/Fixture/movie-1mb.mp4"}
 			};
 
 			var task = Video.CreateAsync (tokens, new S3ClientMock(MockResponse.Video));
@@ -245,7 +245,7 @@ namespace tests
 			var video = Video.Find (7574853, new ClientMock(MockResponse.Video));
 
 			Dictionary<string, object> tokens = new Dictionary<string, object> () {
-				{ "image", "../../src/Fixture/test.jpg"}
+				{ "image", "../../../src/Fixture/test.jpg"}
 			};
 
 			video.SetImageFrame(tokens);
@@ -315,7 +315,7 @@ namespace tests
 
 				Dictionary<string, object> tokens = new Dictionary<string, object> () {
 					{ "code", "en" },
-					{ "file", "../../src/Fixture/test.srt" }
+					{ "file", "../../../src/Fixture/test.srt" }
 				};
 
 				Subtitle subtitle = video.SubtitleCreate(tokens);
@@ -358,7 +358,7 @@ namespace tests
 
 				Dictionary<string, object> tokens = new Dictionary<string, object> () {
 					{ "code", "en" },
-					{ "file", "../../src/Fixture/test.srt" }
+					{ "file", "../../../src/Fixture/test.srt" }
 				};
 
 				var subtitleId = 26548;
@@ -524,7 +524,7 @@ namespace tests
 
 			Dictionary<string, object> tokens = new Dictionary<string, object> () {
 				{ "code", "en" },
-				{ "file", "../../src/Fixture/test.srt" }
+				{ "file", "../../../src/Fixture/test.srt" }
 			};
 
 			Subtitle subtitle = video.SubtitleCreate(tokens);
@@ -559,7 +559,7 @@ namespace tests
 
 				Dictionary<string, object> tokens = new Dictionary<string, object> () {
 					{ "title", "Example video" },
-					{ "filepath", "../../src/Fixture/movie-1mb.mp4" }
+					{ "filepath", "../../../src/Fixture/movie-1mb.mp4" }
 				};
 
 				var task = Video.CreateAsync (tokens, new S3ClientMock (MockResponse.UploadFailed));
@@ -592,7 +592,7 @@ namespace tests
 
 				Dictionary<string, object> tokens = new Dictionary<string, object> () {
 					{ "title", "Example video" },
-					{"filepath", "../../src/Fixture/movie-5mb.mp4"}
+					{"filepath", "../../../src/Fixture/movie-5mb.mp4"}
 				};
 
 				var task = Video.CreateAsync (tokens, new S3ClientMock(MockResponse.SignatureFailed));
@@ -625,7 +625,7 @@ namespace tests
 
 				Dictionary<string, object> tokens = new Dictionary<string, object> () {
 					{ "title", "Example video" },
-					{ "filepath", "../../src/Fixture/movie-5mb.mp4"},
+					{ "filepath", "../../../src/Fixture/movie-5mb.mp4"},
 					{ "guid", "vz91e80db09a494467b265f0c327950825"},
 					{ "url", "https://example.com/video-unit.mp4"}
 				};
