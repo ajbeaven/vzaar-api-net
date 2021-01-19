@@ -11,6 +11,8 @@
     <Description>
       A custom version of the git repo https://github.com/vzaar/vzaar-api-net that actually does async correctly.
     </Description>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>

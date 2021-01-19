@@ -7,11 +7,28 @@ By [vzaar](http://vzaar.com)
 vzaar's .NET client for interacting with version 2 of the [vzaar
 API](https://vzaar.readme.io/docs).
 
+## Updating nuget package
+
+1. Start by creating a nupkg file. Go to the folder with the .sln file and run:
+```
+dotnet pack -c Release
+```
+2. This creates a .nupkg and .snupkg (symbols) that is uploaded to a nuget package repository (nuget.org, Azure Devops Artifacts, etc). Lets do that now. 
+
+3. If this is the first time you're updating the nuget package, otherwise skip to step 4 now:
+```
+dotnet nuget add source https://pkgs.dev.azure.com/SimplyDating/_packaging/SimplyDatingNuget/nuget/v3/index.json --name SimplyDatingNuget --username any-name-here --password PAT
+```
+
+4. Now push the nuget package to the nuget repository:
+```
+dotnet nuget push --source "SimplyDatingNuget" "lib/bin/Release/SD_VzaarApi.X.X.X.nupkg`
+```
+
 ## Requirements
 
 The library code compiles on:
-- Mono 4.6.2 / .NET 45
-- .NET Core 1.0 / .NET Standard >=1.3
+- .NET Core 5.0 / .NET Standard >=2.1
 
 ## Backwards compatability
 
@@ -42,14 +59,6 @@ Client.auth_token = "token";
 Usage instructions and examples are available on [vzaar's documentation
 site](https://vzaar.readme.io).
 
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
 
 ## License
 
